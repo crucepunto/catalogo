@@ -6,31 +6,157 @@
   },
   "products": [
     {
-      "code": "P-0001",
-      "name": "Bolsa negra de piel",
-      "category": "Bolsas",
-      "price": 2400,
-      "status": "disponible",
-      "image": "",
-      "description": "Bolsa mediana, forro interior en buen estado. Incluye correa."
-    },
-    {
-      "code": "P-0002",
-      "name": "Tenis blancos talla 7",
-      "category": "Calzado",
-      "price": 1700,
-      "status": "apartada",
-      "image": "",
-      "description": "Casi nuevos, usados una vez."
-    },
-    {
-      "code": "P-0003",
-      "name": "Chamarra de mezclilla",
+      "code": "C-001",
+      "name": "F1 Puma Shirt L",
       "category": "Ropa",
-      "price": 1250,
+      "price": 660,
       "status": "disponible",
       "image": "",
-      "description": "Talla M, corte clásico."
+      "description": ""
+    },
+    {
+      "code": "C-002",
+      "name": "Steve Madden Shoulder Bag Brown",
+      "category": "Bolsas y carteras",
+      "price": 1380,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-003",
+      "name": "Steve Madden Shoulder Bag Black",
+      "category": "Bolsas y carteras",
+      "price": 1280,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-004",
+      "name": "Steve Madden Wallet Brown",
+      "category": "Bolsas y carteras",
+      "price": 780,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-005",
+      "name": "Steve Madden Wallet Green",
+      "category": "Bolsas y carteras",
+      "price": 780,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-006",
+      "name": "True Religion Travel Bag Men",
+      "category": "Bolsas y carteras",
+      "price": 680,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-007",
+      "name": "True Religion Mariconera Café",
+      "category": "Bolsas y carteras",
+      "price": 880,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-008",
+      "name": "True Religion Black Slides",
+      "category": "Calzado",
+      "price": 680,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-009",
+      "name": "True Religion Black Shirt",
+      "category": "Ropa",
+      "price": 480,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-010",
+      "name": "Von Dutch Long Socks",
+      "category": "Ropa interior y calcetines",
+      "price": 280,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-011",
+      "name": "Calvin Klein Women Underwear",
+      "category": "Ropa interior y calcetines",
+      "price": 780,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-012",
+      "name": "True Religion Underwear Xl",
+      "category": "Ropa interior y calcetines",
+      "price": 580,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-013",
+      "name": "Calvin Klein Men Underwear S",
+      "category": "Ropa interior y calcetines",
+      "price": 780,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-014",
+      "name": "Calvin Klein Men Underwear M",
+      "category": "Ropa interior y calcetines",
+      "price": 780,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-015",
+      "name": "Calvin Klein Men Underwear L",
+      "category": "Ropa interior y calcetines",
+      "price": 820,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-016",
+      "name": "New Balance Underwear S",
+      "category": "Ropa interior y calcetines",
+      "price": 680,
+      "status": "disponible",
+      "image": "",
+      "description": ""
+    },
+    {
+      "code": "C-017",
+      "name": "True Religion Red Shirt",
+      "category": "Ropa",
+      "price": 480,
+      "status": "disponible",
+      "image": "",
+      "description": ""
     }
   ]
 }
