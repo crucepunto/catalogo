@@ -1,0 +1,36 @@
+{
+  "store": {
+    "name": "Mi tienda",
+    "tagline": "Piezas únicas traídas de Estados Unidos",
+    "whatsapp": "5210000000000"
+  },
+  "products": [
+    {
+      "code": "P-0001",
+      "name": "Bolsa negra de piel",
+      "category": "Bolsas",
+      "price": 2400,
+      "status": "disponible",
+      "image": "",
+      "description": "Bolsa mediana, forro interior en buen estado. Incluye correa."
+    },
+    {
+      "code": "P-0002",
+      "name": "Tenis blancos talla 7",
+      "category": "Calzado",
+      "price": 1700,
+      "status": "apartada",
+      "image": "",
+      "description": "Casi nuevos, usados una vez."
+    },
+    {
+      "code": "P-0003",
+      "name": "Chamarra de mezclilla",
+      "category": "Ropa",
+      "price": 1250,
+      "status": "disponible",
+      "image": "",
+      "description": "Talla M, corte clásico."
+    }
+  ]
+}
