@@ -25,9 +25,9 @@ textarea{min-height:72px;resize:vertical}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .pc{display:grid;grid-template-columns:110px 1fr;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:4px;padding:12px;margin-bottom:12px}
 @media(max-width:560px){.pc{grid-template-columns:1fr}}
-.pimg{display:flex;flex-direction:column;gap:8px}
+.pimg{display:flex;flex-direction:column;gap:10px}.slot{display:flex;flex-direction:column;gap:6px}.slot small{font-size:12px;color:var(--mut)}.slot .btn{padding:8px 10px;font-size:14px;text-align:center;cursor:pointer}
 .pimg img{width:100%;aspect-ratio:4/5;object-fit:cover;background:var(--line);display:block}
-@media(max-width:560px){.pimg{flex-direction:row;align-items:center}.pimg img{width:96px;flex:none}.pimg label.btn{flex:1}}
+@media(max-width:560px){.pimg{flex-direction:row;gap:12px}.slot{flex:1;min-width:0}.pimg img{width:100%}}
 .pf{display:grid;gap:10px}
 .code{font-weight:700}
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center;justify-content:space-between}
@@ -145,17 +145,26 @@ async function connect() {
 }
 
 function nextCode() { let m = 0; data.products.forEach(p => { const x = /^P-(\d+)$/.exec(p.code || ""); if (x) m = Math.max(m, +x[1]); }); return "P-" + String(m + 1).padStart(4, "0"); }
-const imgSrc = p => pending[p.code] ? pending[p.code].url : (p.image ? `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/${p.image}` : "");
+const pkey = (p, n) => n === 2 ? p.code + "#2" : p.code;
+const fld = n => n === 2 ? "image2" : "image";
+const imgSrc = (p, n = 1) => pending[pkey(p, n)] ? pending[pkey(p, n)].url : (p[fld(n)] ? `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/${p[fld(n)]}` : "");
+const hasImg = (p, n) => !!(p[fld(n)] || pending[pkey(p, n)]);
+function slot(p, n) {
+  const src = imgSrc(p, n), has = hasImg(p, n);
+  return `<div class="slot"><small>${n === 1 ? "Foto principal" : "Foto 2 (opcional)"}</small>
+    <img alt="" ${src ? `src="${esc(src)}"` : ""}>
+    <label class="btn">${has ? "Cambiar" : "Subir foto"}<input type="file" accept="image/*" hidden data-photo="${n}"></label>
+    ${n === 2 && has ? '<button class="btn bad" data-rm2>Quitar foto 2</button>' : ""}</div>`;
+}
 
 function renderAll() {
   $("#s-name").value = data.store.name || ""; $("#s-wa").value = data.store.whatsapp || ""; $("#s-tag").value = data.store.tagline || "";
   $("#cats").innerHTML = [...new Set(data.products.map(p => p.category).filter(Boolean))].map(c => `<option value="${esc(c)}">`).join("");
   const idx = data.products.map((p, i) => i).reverse();   // más nuevas primero
-  $("#list").innerHTML = idx.map(i => { const p = data.products[i], src = imgSrc(p); return `
+  $("#list").innerHTML = idx.map(i => { const p = data.products[i]; return `
   <div class="pc" data-i="${i}">
     <div class="pimg">
-      <img alt="" ${src ? `src="${esc(src)}"` : ""}>
-      <label class="btn" style="text-align:center;cursor:pointer">${p.image || pending[p.code] ? "Cambiar foto" : "Subir foto"}<input type="file" accept="image/*" hidden data-photo></label>
+      ${slot(p, 1)}${slot(p, 2)}
     </div>
     <div class="pf">
       <div class="row" style="justify-content:space-between"><span class="code">${esc(p.code)}</span><button class="btn bad" data-del>Borrar</button></div>
@@ -193,15 +202,20 @@ $("#list").addEventListener("change", async e => {
   const card = e.target.closest(".pc"); if (!card) return;
   const p = data.products[+card.dataset.i];
   if (e.target.matches("[data-photo]") && e.target.files[0]) {
-    try { pending[p.code] = await resize(e.target.files[0]); card.querySelector("img").src = pending[p.code].url; setDirty(true); log("Foto lista. Falta publicar."); }
+    const n = +e.target.dataset.photo || 1;
+    try { pending[pkey(p, n)] = await resize(e.target.files[0]); setDirty(true); renderAll(); log("Foto lista. Falta publicar."); }
     catch (err) { log(err.message, "err"); }
   }
 });
 $("#list").addEventListener("click", e => {
+  if (e.target.matches("[data-rm2]")) {
+    const p = data.products[+e.target.closest(".pc").dataset.i];
+    delete pending[pkey(p, 2)]; p.image2 = ""; setDirty(true); renderAll(); log("Foto 2 quitada. Falta publicar."); return;
+  }
   if (!e.target.matches("[data-del]")) return;
   const i = +e.target.closest(".pc").dataset.i, p = data.products[i];
   if (!confirm(`¿Borrar ${p.code} ${p.name || ""}? Se quita del catálogo al publicar.`)) return;
-  delete pending[p.code]; data.products.splice(i, 1); setDirty(true); renderAll();
+  delete pending[pkey(p, 1)]; delete pending[pkey(p, 2)]; data.products.splice(i, 1); setDirty(true); renderAll();
 });
 $("#add").addEventListener("click", () => {
   data.products.push({code: nextCode(), name: "", category: "", price: 0, status: "disponible", image: "", description: ""});
@@ -214,11 +228,12 @@ $("#publish").addEventListener("click", async () => {
   if (bad) { log(`A la pieza ${bad.code} le falta el nombre.`, "err"); return; }
   const btn = $("#publish"); btn.disabled = true;
   try {
-    for (const [code, ph] of Object.entries(pending)) {
+    for (const [key, ph] of Object.entries(pending)) {
+      const [code, two] = key.split("#"), n = two ? 2 : 1;
       const p = data.products.find(x => x.code === code); if (!p) continue;
-      log(`Subiendo foto de ${code}…`);
-      const path = `img/${code.toLowerCase()}-${Date.now().toString(36)}.jpg`;
-      await putFile(path, ph.b64, "Foto " + code); p.image = path;
+      log(`Subiendo foto ${n} de ${code}…`);
+      const path = `img/${code.toLowerCase()}${n === 2 ? "-b" : ""}-${Date.now().toString(36)}.jpg`;
+      await putFile(path, ph.b64, `Foto ${n} ${code}`); p[fld(n)] = path;
     }
     pending = {};
     log("Publicando catálogo…");
