@@ -44,6 +44,10 @@ main{max-width:1100px;margin:0 auto;padding:4px 16px 48px}
 dialog{border:0;border-radius:16px;padding:0;max-width:min(520px,94vw);width:100%;background:var(--card);color:var(--txt)}
 dialog::backdrop{background:rgba(0,0,0,.6)}
 dialog img{width:100%;max-height:60vh;object-fit:contain;background:var(--line);display:block}
+.gal{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}.gal::-webkit-scrollbar{display:none}
+.gal img{flex:none;scroll-snap-align:center}
+.dots{display:flex;justify-content:center;gap:6px;padding:8px 0 0}.dots span{width:7px;height:7px;border-radius:50%;background:var(--line)}.dots span.on{background:var(--txt)}
+.n2{position:absolute;bottom:10px;right:10px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:2px;background:rgba(0,0,0,.6);color:#fff}
 .dbody{padding:16px;display:grid;gap:8px}
 .close{position:absolute;top:8px;right:8px;border:0;background:rgba(0,0,0,.55);color:#fff;border-radius:2px;width:36px;height:36px;font-size:20px;cursor:pointer}
 footer{text-align:center;color:var(--mut);font-size:13px;padding:0 16px 32px}
@@ -140,7 +144,7 @@ function render() {
     return `<article class="card ${st}">
       <button class="ph" data-code="${esc(p.code)}" aria-label="Ver ${esc(p.name)}">
         <img src="${esc(p.image || PLACEHOLDER)}" alt="${esc(p.name)}" loading="lazy" onerror="this.onerror=null;this.src='${PLACEHOLDER}'">
-        <span class="badge ${st}">${LABEL[st]}</span>
+        <span class="badge ${st}">${LABEL[st]}</span>${p.image && p.image2 ? '<span class="n2">2 fotos</span>' : ""}
       </button>
       <div class="info">
         <div class="cat">${esc(p.category)} · ${esc(p.code)}</div>
@@ -155,12 +159,16 @@ function openPiece(code) {
   const p = PRODUCTS.find(x => x.code === code); if (!p) return;
   const st = LABEL[p.status] ? p.status : "disponible", off = st === "vendida";
   $("#dlg").innerHTML = `<button class="close" aria-label="Cerrar" data-x="1">×</button>
-    <img src="${esc(p.image || PLACEHOLDER)}" alt="${esc(p.name)}">
+    ${(() => { const imgs = [p.image, p.image2].filter(Boolean); if (!imgs.length) imgs.push(PLACEHOLDER);
+      return `<div class="gal">${imgs.map(s => `<img src="${esc(s)}" alt="${esc(p.name)}">`).join("")}</div>` +
+        (imgs.length > 1 ? `<div class="dots">${imgs.map((_, i) => `<span class="${i ? "" : "on"}"></span>`).join("")}</div>` : ""); })()}
     <div class="dbody"><div class="cat">${esc(p.category)} · ${esc(p.code)} · ${LABEL[st]}</div>
     <div class="name">${esc(p.name)}</div><div class="price">${money(p.price)}</div>
     <p style="margin:0">${esc(p.description)}</p>
     <a class="btn" ${off ? 'aria-disabled="true"' : `href="${waLink(p)}" target="_blank" rel="noopener"`}>${off ? "Vendida" : "Pedir por WhatsApp"}</a></div>`;
   $("#dlg").showModal();
+  const g = $("#dlg .gal"), d = $("#dlg .dots");
+  if (d) g.addEventListener("scroll", () => { const k = Math.round(g.scrollLeft / g.clientWidth); [...d.children].forEach((s, i) => s.classList.toggle("on", i === k)); });
 }
 
 $("#chips").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; cat = b.dataset.c; renderChips(); render(); });
