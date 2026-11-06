@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mi Catálogo</title>
+<meta name="description" content="Catálogo de piezas disponibles">
+<style>
+:root{--bg:#f6f6f4;--card:#fff;--txt:#161616;--mut:#6b6f6c;--line:#e2e4e0;--acc:#0b7a3b;--acc-txt:#fff;--warn:#b26a00;--bad:#8a8a8a}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1110;--card:#181b19;--txt:#ededed;--mut:#9aa09b;--line:#2a2e2b;--acc:#2fbf68;--acc-txt:#04140a;--warn:#e8a33d;--bad:#777}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 0 env(safe-area-inset-bottom)}
+header{background:#0b0b0b;color:#fff;padding-top:env(safe-area-inset-top)}
+.hwrap{max-width:1100px;margin:0 auto;padding:20px 16px 18px}
+h1{margin:0;font-size:clamp(24px,5vw,36px);letter-spacing:-.02em}
+.logo{display:block;height:36px;width:auto;max-width:75%}
+.tag{margin:8px 0 0;color:#aab0ab;font-size:15px}
+.bar{max-width:1100px;margin:0 auto;padding:12px 16px;display:grid;gap:10px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input[type=search],select{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:2px;padding:10px 12px;min-width:0}
+input[type=search]{flex:1 1 220px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);color:inherit;border-radius:2px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--txt);color:var(--bg);border-color:var(--txt)}
+label.sold{font-size:14px;color:var(--mut);display:flex;gap:6px;align-items:center}
+main{max-width:1100px;margin:0 auto;padding:4px 16px 48px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.card.vendida{opacity:.55}
+.ph{position:relative;aspect-ratio:4/5;background:var(--line);border:0;padding:0;cursor:pointer;display:block;width:100%}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.badge{position:absolute;top:10px;left:10px;font-size:12px;font-weight:600;padding:4px 9px;border-radius:2px;background:var(--acc);color:var(--acc-txt)}
+.badge.apartada{background:var(--warn);color:#fff}.badge.vendida{background:var(--bad);color:#fff}
+.info{padding:12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.name{font-weight:600;line-height:1.25}
+.cat{font-size:13px;color:var(--mut)}
+.price{font-size:18px;font-weight:700;margin-top:2px}
+.btn{margin-top:auto;display:block;text-align:center;text-decoration:none;background:var(--acc);color:var(--acc-txt);font-weight:600;border-radius:2px;padding:11px;font-size:15px;border:0;cursor:pointer;width:100%}
+.btn[aria-disabled=true]{background:var(--line);color:var(--mut);pointer-events:none}
+.empty{text-align:center;color:var(--mut);padding:48px 0}
+dialog{border:0;border-radius:16px;padding:0;max-width:min(520px,94vw);width:100%;background:var(--card);color:var(--txt)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+dialog img{width:100%;max-height:60vh;object-fit:contain;background:var(--line);display:block}
+.dbody{padding:16px;display:grid;gap:8px}
+.close{position:absolute;top:8px;right:8px;border:0;background:rgba(0,0,0,.55);color:#fff;border-radius:2px;width:36px;height:36px;font-size:20px;cursor:pointer}
+footer{text-align:center;color:var(--mut);font-size:13px;padding:0 16px 32px}
+</style>
+</head>
+<body>
+<header><div class="hwrap">
+  <img id="logo" class="logo" alt="" hidden>
+  <h1 id="store-name"></h1>
+  <p class="tag" id="store-tag"></p>
+</div></header>
+<div class="bar">
+  <div class="row">
+    <input type="search" id="q" placeholder="Buscar por nombre, código o descripción…" aria-label="Buscar">
+    <select id="sort" aria-label="Ordenar">
+      <option value="new">Más recientes</option>
+      <option value="asc">Precio: menor a mayor</option>
+      <option value="desc">Precio: mayor a menor</option>
+    </select>
+    <label class="sold"><input type="checkbox" id="showSold"> Mostrar vendidas</label>
+  </div>
+  <div class="chips" id="chips" role="group" aria-label="Categorías"></div>
+</div>
+<main>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" hidden>No encontramos piezas con esa búsqueda.</div>
+</main>
+<footer id="foot"></footer>
+<dialog id="dlg"></dialog>
+
+<script>
+/* Los datos reales viven en products.json (lo edita solo la dueña desde admin.html).
+   Lo de abajo es únicamente un respaldo por si products.json no carga. */
+const STORE = {
+  name: "Mi tienda",
+  logo: "data:image/png;base64,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",   // tu logo ya va incluido aquí (déjalo vacío "" para mostrar el nombre en texto)
+  tagline: "Piezas únicas traídas de Estados Unidos",
+  whatsapp: "5210000000000",   // código de país + número, sin + ni espacios (ej. 52 + 10 dígitos)
+  currency: "MXN",
+  locale: "es-MX"
+};
+
+/* Piezas de respaldo. NO pongas costos ni márgenes: este archivo es público. */
+let PRODUCTS = [
+  { code: "P-0001", name: "Bolsa negra de piel", category: "Bolsas", price: 2400, status: "disponible", image: "", description: "Bolsa mediana, forro interior en buen estado. Incluye correa." },
+  { code: "P-0002", name: "Tenis blancos talla 7", category: "Calzado", price: 1700, status: "apartada", image: "", description: "Casi nuevos, usados una vez." },
+  { code: "P-0003", name: "Chamarra de mezclilla", category: "Ropa", price: 1250, status: "disponible", image: "", description: "Talla M, corte clásico." },
+  { code: "P-0004", name: "Cartera pequeña", category: "Accesorios", price: 650, status: "vendida", image: "", description: "Color café." }
+];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = n => new Intl.NumberFormat(STORE.locale, {style:"currency", currency:STORE.currency, maximumFractionDigits:0}).format(n);
+const LABEL = {disponible:"Disponible", apartada:"Apartada", vendida:"Vendida"};
+const PLACEHOLDER = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 500"><rect width="400" height="500" fill="#d9dcd8"/><text x="200" y="260" font-family="sans-serif" font-size="22" fill="#8a8f8b" text-anchor="middle">Sin foto</text></svg>');
+
+let cat = "Todas";
+
+function paintHeader() {
+  document.title = STORE.name + " · Catálogo";
+  $("#store-name").textContent = STORE.name;
+  if (STORE.logo) { const l = $("#logo"); l.alt = STORE.name; l.onerror = () => { l.hidden = true; $("#store-name").hidden = false; }; l.src = STORE.logo; l.hidden = false; $("#store-name").hidden = true; }
+  $("#store-tag").textContent = STORE.tagline;
+  $("#foot").textContent = "Piezas únicas: cuando se venden, no se vuelven a surtir.";
+}
+
+function waLink(p) {
+  const msg = `Hola, me interesa la pieza ${p.code} (${p.name}) de ${money(p.price)}. ¿Sigue disponible?`;
+  return `https://wa.me/${STORE.whatsapp}?text=${encodeURIComponent(msg)}`;
+}
+
+function renderChips() {
+  const cats = ["Todas", ...new Set(PRODUCTS.map(p => p.category).filter(Boolean))];
+  $("#chips").innerHTML = cats.map(c => `<button class="chip" aria-pressed="${c === cat}" data-c="${esc(c)}">${esc(c)}</button>`).join("");
+}
+
+function visible() {
+  const q = $("#q").value.trim().toLowerCase(), sold = $("#showSold").checked, sort = $("#sort").value;
+  let list = PRODUCTS.filter(p =>
+    (cat === "Todas" || p.category === cat) &&
+    (sold || p.status !== "vendida") &&
+    (!q || [p.name, p.code, p.description, p.category].join(" ").toLowerCase().includes(q)));
+  if (sort === "asc") list.sort((a, b) => a.price - b.price);
+  else if (sort === "desc") list.sort((a, b) => b.price - a.price);
+  else list = list.slice().reverse();          // más recientes = los últimos que agregaste
+  return list;
+}
+
+function render() {
+  const list = visible();
+  $("#empty").hidden = list.length > 0;
+  $("#grid").innerHTML = list.map(p => {
+    const st = LABEL[p.status] ? p.status : "disponible", off = st === "vendida";
+    return `<article class="card ${st}">
+      <button class="ph" data-code="${esc(p.code)}" aria-label="Ver ${esc(p.name)}">
+        <img src="${esc(p.image || PLACEHOLDER)}" alt="${esc(p.name)}" loading="lazy" onerror="this.onerror=null;this.src='${PLACEHOLDER}'">
+        <span class="badge ${st}">${LABEL[st]}</span>
+      </button>
+      <div class="info">
+        <div class="cat">${esc(p.category)} · ${esc(p.code)}</div>
+        <div class="name">${esc(p.name)}</div>
+        <div class="price">${money(p.price)}</div>
+        <a class="btn" ${off ? 'aria-disabled="true"' : `href="${waLink(p)}" target="_blank" rel="noopener"`}>${off ? "Vendida" : "Pedir por WhatsApp"}</a>
+      </div></article>`;
+  }).join("");
+}
+
+function openPiece(code) {
+  const p = PRODUCTS.find(x => x.code === code); if (!p) return;
+  const st = LABEL[p.status] ? p.status : "disponible", off = st === "vendida";
+  $("#dlg").innerHTML = `<button class="close" aria-label="Cerrar" data-x="1">×</button>
+    <img src="${esc(p.image || PLACEHOLDER)}" alt="${esc(p.name)}">
+    <div class="dbody"><div class="cat">${esc(p.category)} · ${esc(p.code)} · ${LABEL[st]}</div>
+    <div class="name">${esc(p.name)}</div><div class="price">${money(p.price)}</div>
+    <p style="margin:0">${esc(p.description)}</p>
+    <a class="btn" ${off ? 'aria-disabled="true"' : `href="${waLink(p)}" target="_blank" rel="noopener"`}>${off ? "Vendida" : "Pedir por WhatsApp"}</a></div>`;
+  $("#dlg").showModal();
+}
+
+$("#chips").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; cat = b.dataset.c; renderChips(); render(); });
+$("#grid").addEventListener("click", e => { const b = e.target.closest("[data-code]"); if (b) openPiece(b.dataset.code); });
+$("#dlg").addEventListener("click", e => { if (e.target === $("#dlg") || e.target.dataset.x) $("#dlg").close(); });
+["q", "sort", "showSold"].forEach(id => $("#" + id).addEventListener("input", render));
+
+async function loadData() {
+  try {
+    const r = await fetch("products.json", {cache: "no-cache"});
+    if (r.ok) {
+      const j = await r.json();
+      if (j.store) Object.assign(STORE, j.store, {logo: STORE.logo});
+      if (Array.isArray(j.products)) PRODUCTS = j.products;
+    }
+  } catch (e) { /* sin products.json (vista previa local): se usan los datos de respaldo */ }
+}
+$("#grid").innerHTML = '<div class="empty">Cargando…</div>';
+loadData().then(() => { paintHeader(); renderChips(); render(); });
+</script>
+</body>
+</html>
